@@ -1,6 +1,10 @@
 package config
 
-import "os"
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	PublicHost string
@@ -14,11 +18,12 @@ type Config struct {
 var Envs = initConfig()
 
 func initConfig() Config {
+	godotenv.Load(".env")
 	return Config{
 		PublicHost: getEnv("PUBLIC_HOST", "localhost"),
 		Port:       getEnv("PORT", "8080"),
 		DBUser:     getEnv("DB_USER", "root"),
-		DBPass:     getEnv("DB_PASS", "password"),
+		DBPass:     getEnv("DB_PASS", "root"),
 		DBAddr:     getEnv("DB_ADDR", "localhost:3306"),
 		DBName:     getEnv("DB_NAME", "simple_api"),
 	}
