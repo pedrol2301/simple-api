@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"simple-api/service/auth"
 	"simple-api/types"
 	"simple-api/utils"
 
@@ -9,11 +10,13 @@ import (
 )
 
 type Handler struct {
-	store *types.UserStore
+	store types.UserStore
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(store types.UserStore) *Handler {
+	return &Handler{
+		store: store,
+	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
@@ -36,5 +39,29 @@ func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the user already exists
+	_, err := h.store.GetUserByEmail(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
 
+	hashedPassword, err := auth.HashPassword(payload.Password)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+
+	// Create the user
+	u := &types.User{
+		Email:     payload.Email,
+		Password:  hashedPassword,
+		FirstName: payload.FirstName,
+		LastName:  payload.LastName,
+	}
+
+	if err := h.store.CreateUser(u); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJsonResponse(w, http.StatusCreated, u)
 }
